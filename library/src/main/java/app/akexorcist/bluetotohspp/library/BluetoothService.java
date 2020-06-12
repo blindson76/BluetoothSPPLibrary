@@ -353,28 +353,22 @@ public class BluetoothService {
             ArrayList<Integer> arr_byte = new ArrayList<Integer>();
 
             // Keep listening to the InputStream while connected
-            while (true) {
-                try {
-                    int data = mmInStream.read();
-                    if(data == 0x0A) { 
-                    } else if(data == 0x0D) {
-                        buffer = new byte[arr_byte.size()];
-                        for(int i = 0 ; i < arr_byte.size() ; i++) {
-                            buffer[i] = arr_byte.get(i).byteValue();
-                        }
-                        // Send the obtained bytes to the UI Activity
-                        mHandler.obtainMessage(BluetoothState.MESSAGE_READ
-                                , buffer.length, -1, buffer).sendToTarget();
-                        arr_byte = new ArrayList<Integer>();
-                    } else {
-                        arr_byte.add(data);
+           int bytes = 0;
+            try {
+                bytes = this.mmInStream.read(buffer);
+                if (bytes > 0) {
+                    byte[] buf = new byte[bytes];
+                    int i = 0;
+                    while (i < bytes) {
+                        buf[i] = buffer[i];
+                        i++;
                     }
-                } catch (IOException e) {
-                    connectionLost();
-                    // Start the service over to restart listening mode
-                    BluetoothService.this.start(BluetoothService.this.isAndroid);
-                    break;
+                    BluetoothService.this.mHandler.obtainMessage(2, bytes, -1, buf).sendToTarget();
                 }
+            } catch (IOException e) {
+                Log.e(BluetoothService.TAG, "Error: "+e.getMessage());
+                BluetoothService.this.start(BluetoothService.this.isAndroid);
+                e.printStackTrace();
             }
         }
 
